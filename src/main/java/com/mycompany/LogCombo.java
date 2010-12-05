@@ -44,8 +44,7 @@ public class LogCombo {
             LOG.trace("Doing it - {}", Integer.valueOf(i));
             try {
                 // Doing something
-                Thread.sleep(200L);
-                if (i== 5) { throw new Exception("Dummy exception"); }
+                Thread.sleep(500L);
             } catch (Exception ex) {
                LOG.error("{}",ex.getStackTrace());
             }     
