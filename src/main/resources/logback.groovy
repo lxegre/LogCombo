@@ -40,7 +40,7 @@ def HOSTNAME = hostname // a hack trick to resolve visibility
 
 
 // Standard ouput (console) log
-appender("CONSOLE", ConsoleAppender) {
+appender("CONSOLE_LOG", ConsoleAppender) {
     filter(ThresholdFilter) {
         level = INFO
     }
@@ -51,13 +51,13 @@ appender("CONSOLE", ConsoleAppender) {
 }
 
 // A global application log file, with rolling policy
-appender("FILE", RollingFileAppender) {
+appender("APP_LOG", RollingFileAppender) {
     //file = "${baseName}-${bySecond}.log"
     file = "${baseName}.log"
     rollingPolicy(FixedWindowRollingPolicy) {
         fileNamePattern = "${baseName}.%i.log.zip"
         minIndex = 1
-        maxIndex = 10
+        maxIndex = 9
     }
     triggeringPolicy(SizeBasedTriggeringPolicy) {
         maxFileSize = "2MB"
@@ -70,29 +70,43 @@ appender("FILE", RollingFileAppender) {
 
 // A simple log file in USER home directory
 def USER_HOME = System.getProperty("user.home");
-appender("USER_FILE", FileAppender) {
+
+appender("USER_LOG", RollingFileAppender) {
     file = "${USER_HOME}/${baseName}.log"
+    rollingPolicy(FixedWindowRollingPolicy) {
+        fileNamePattern = "${USER_HOME}/${baseName}.%i.log.zip"
+        minIndex = 1
+        maxIndex = 2
+    }
+    triggeringPolicy(SizeBasedTriggeringPolicy) {
+        maxFileSize = "1MB"
+    }
     encoder(PatternLayoutEncoder) {
-        pattern = "%msg%n"
+        pattern = "%d{HH:mm:ss.SSS} - %msg%n"
     }
     filter(ThresholdFilter) {
         level = INFO
     }
 }
 
-// Example of connection to socket Appender (standart)
-/*
-appender("SOCKET", SocketAppender) {
-remoteHost = "localhost"
-port = "4560"
-reconnectionDelay = 10000
-//includeCallerData = "${includeCallerData}"
+appender("LILITH_LOG", RollingFileAppender) {
+    file = "${baseName}.lilith"
+    encoder(ClassicLilithEncoder) {
+        includeCallerData = true
+    }
+    rollingPolicy(FixedWindowRollingPolicy) {
+        fileNamePattern = "${baseName}.%i.lilith.zip"
+        minIndex = 1
+        maxIndex = 9
+    }
+    triggeringPolicy(SizeBasedTriggeringPolicy) {
+        maxFileSize = "2MB"
+    }
+        append = true
 }
-root(DEBUG, ["SOCKET"])
- */
 
 // Connection to lilith socket appender (better than standart, compressed serialized java data is sent)
-appender("MULTIPLEX", ClassicMultiplexSocketAppender) {
+appender("LILITH_SOCKET", ClassicMultiplexSocketAppender) {
     compressing = true
     reconnectionDelay = 10000
     includeCallerData = true
@@ -107,24 +121,8 @@ appender("MULTIPLEX", ClassicMultiplexSocketAppender) {
      */
 }
 
-appender("LILITH_FILE", RollingFileAppender) {
-    file = "${baseName}.lilith"
-    encoder(ClassicLilithEncoder) {
-        includeCallerData = true
-    }
-    rollingPolicy(FixedWindowRollingPolicy) {
-        fileNamePattern = "${baseName}.%i.lilith.zip"
-        minIndex = 1
-        maxIndex = 10
-    }
-    triggeringPolicy(SizeBasedTriggeringPolicy) {
-        maxFileSize = "2MB"
-    }
-        append = true
-}
-
 // Registers log events to Appenders
-root(INFO, ["CONSOLE","FILE", "MULTIPLEX", "LILITH_FILE"])
+root(INFO, ["CONSOLE_LOG","APP_LOG", "USER_LOG","LILITH_LOG", "LILITH_SOCKET"])
 
 // Example of logger for a specific class/package
 //logger("com.mycompany.${baseName}", DEBUG, ["STDOUT"])
